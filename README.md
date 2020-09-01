@@ -1,90 +1,52 @@
-# TmoGql
+# Demo of GraphQL stitching + Hapi
 
-This project was generated using [Nx](https://nx.dev).
+This project is a demo of how to add a GraphQL endpoint to Hapi, and stitch together remote schemas.
 
-<p align="center"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
+**Problem:**
 
-🔎 **Nx is a set of Extensible Dev Tools for Monorepos.**
+Currently, the Hapi server exposes REST endpoints on `/api/*`. However, the CHUB team is adding a GraphQL service that we will need access to from the browser.
 
-## Adding capabilities to your workspace
+**Solution:**
 
-Nx supports many plugins which add capabilities for developing different types of applications and different tools.
+Use Apollo Server with Hapi to handle requests on `/graphql`, and use graphql-tools to stitch together remote endpoints so they are accessible from UI.  
 
-These capabilities include generating applications, libraries, etc as well as the devtools to test, and build projects as well.
+See the api main module to see how things are put together: [`apps/api/src/main.ts`](https://github.com/jaysoo/graphql-hapi-example/blob/main/apps/api/src/main.ts).
 
-Below are our core plugins:
+## Running
 
-- [React](https://reactjs.org)
-  - `npm install --save-dev @nrwl/react`
-- Web (no framework frontends)
-  - `npm install --save-dev @nrwl/web`
-- [Angular](https://angular.io)
-  - `npm install --save-dev @nrwl/angular`
-- [Nest](https://nestjs.com)
-  - `npm install --save-dev @nrwl/nest`
-- [Express](https://expressjs.com)
-  - `npm install --save-dev @nrwl/express`
-- [Node](https://nodejs.org)
-  - `npm install --save-dev @nrwl/node`
+Install deps:
+```
+yarn
+```
 
-There are also many [community plugins](https://nx.dev/nx-community) you could add.
+Start "remote" service:
 
-## Generate an application
+```
+nx serve books
+```
 
-Run `nx g @nrwl/react:app my-app` to generate an application.
+Start API:
 
-> You can use any of the plugins above to generate applications as well.
+```
+nx serve api
+```
 
-When using Nx, you can create multiple applications and libraries in the same workspace.
+Go to the API (http://localhost:3001/graphql) and execute this query:
 
-## Generate a library
+```
+query {
+  books{
+    title,
+    author
+  }
+}
+```
 
-Run `nx g @nrwl/react:lib my-lib` to generate a library.
+You should see some results.
 
-> You can also use any of the plugins above to generate libraries as well.
+## Notes
 
-Libraries are sharable across libraries and applications. They can be imported from `@tmo-gql/mylib`.
-
-## Development server
-
-Run `nx serve my-app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `nx g @nrwl/react:component my-component --project=my-app` to generate a new component.
-
-## Build
-
-Run `nx build my-app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `nx test my-app` to execute the unit tests via [Jest](https://jestjs.io).
-
-Run `nx affected:test` to execute the unit tests affected by a change.
-
-## Running end-to-end tests
-
-Run `ng e2e my-app` to execute the end-to-end tests via [Cypress](https://www.cypress.io).
-
-Run `nx affected:e2e` to execute the end-to-end tests affected by a change.
-
-## Understand your workspace
-
-Run `nx dep-graph` to see a diagram of the dependencies of your projects.
-
-## Further help
-
-Visit the [Nx Documentation](https://nx.dev) to learn more.
-
-## ☁ Nx Cloud
-
-### Computation Memoization in the Cloud
-
-<p align="center"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-cloud-card.png"></p>
-
-Nx Cloud pairs with Nx in order to enable you to build and test code more rapidly, by up to 10 times. Even teams that are new to Nx can connect to Nx Cloud and start saving time instantly.
-
-Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+- This demo does not handle authentication, but we can do so by providing the auth header in executor's `context`.
+- Telemetry is possible still since we intercept hapi requests in the `context` function.
+- Caching is possible in the executor.
+- If the remote schema has subscriptions, we need to provide `subscriber` in addition to `executor`.  
